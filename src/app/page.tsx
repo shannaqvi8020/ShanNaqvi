@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import PromptList from '@/components/PromptList'
@@ -9,7 +8,7 @@ import PromptEditor from '@/components/PromptEditor'
 import VariableModal from '@/components/VariableModal'
 import toast from 'react-hot-toast'
 import type { Folder, Tag, PromptWithTags, TagWithCount } from '@/types/database'
-import { User } from '@supabase/supabase-js'
+import { mockFetchData, mockCreateFolder, mockUpdateFolder, mockDeleteFolder, mockCreatePrompt, mockUpdatePrompt, mockDeletePrompt, mockCreateTag, mockAddPromptTags, mockUpdateUsageCount } from '@/lib/mockData'
 
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null)
@@ -32,67 +31,36 @@ export default function Dashboard() {
     variables: string[]
     prompt: PromptWithTags | null
   }>({ isOpen: false, variables: [], prompt: null })
+  const [isDemo] = useState(true)
 
   const router = useRouter()
-  const supabase = createClient()
 
   const fetchData = useCallback(async () => {
-    if (!user) return
-
-    const [foldersRes, tagsRes, promptsRes, promptTagsRes] = await Promise.all([
-      supabase.from('folders').select('*').eq('user_id', user.id).order('sort_order'),
-      supabase.from('tags').select('*').eq('user_id', user.id),
-      supabase.from('prompts').select('*').eq('user_id', user.id),
-      supabase.from('prompt_tags').select('*'),
-    ])
-
-    if (foldersRes.data) setFolders(foldersRes.data as Folder[])
-    if (tagsRes.data) setAllTags(tagsRes.data as Tag[])
-    
-    if (promptsRes.data && promptTagsRes.data && tagsRes.data) {
-      const promptsData = promptsRes.data as any[]
-      const promptTagsData = promptTagsRes.data as any[]
-      const tagsData = tagsRes.data as Tag[]
-      
-      const promptsWithTags: PromptWithTags[] = promptsData.map((prompt) => {
-        const promptTagIds = promptTagsData
-          .filter((pt) => pt.prompt_id === prompt.id)
-          .map((pt) => pt.tag_id)
-        const promptTags = tagsData.filter((tag) => promptTagIds.includes(tag.id))
-        return { ...prompt, tags: promptTags }
-      })
-      setPrompts(promptsWithTags)
-
-      const tagCounts: Record<string, number> = {}
-      promptTagsData.forEach((pt) => {
-        tagCounts[pt.tag_id] = (tagCounts[pt.tag_id] || 0) + 1
-      })
-      const tagsWithCount: TagWithCount[] = tagsData.map((tag) => ({
-        ...tag,
-        count: tagCounts[tag.id] || 0,
-      }))
-      setTags(tagsWithCount.filter((t) => t.count > 0))
-    }
-  }, [user, supabase])
+    const data = await mockFetchData()
+    setFolders(data.folders)
+    setAllTags(data.allTags)
+    setPrompts(data.prompts)
+    setTags(data.tags)
+  }, [])
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-        return
-      }
-      setUser(user)
+    const initDemo = async () => {
+      const demoUser = {
+        id: 'demo-user-123',
+        email: 'demo@promptvault.app',
+        user_metadata: {},
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        role: 'authenticated',
+      } as any
+      setUser(demoUser)
+      await fetchData()
       setLoading(false)
     }
-    getUser()
-  }, [supabase, router])
-
-  useEffect(() => {
-    if (user) {
-      fetchData()
-    }
-  }, [user, fetchData])
+    initDemo()
+  }, [fetchData])
 
   useEffect(() => {
     let filtered = prompts
@@ -144,15 +112,8 @@ export default function Dashboard() {
       await navigator.clipboard.writeText(text)
       toast.success('Copied to clipboard!')
       
-      const currentPrompt = prompts.find((p) => p.id === promptId)
-      if (currentPrompt) {
-        await supabase
-          .from('prompts')
-          .update({ usage_count: currentPrompt.usage_count + 1 } as any)
-          .eq('id', promptId)
-      }
-      
-      fetchData()
+      await mockUpdateUsageCount(promptId)
+      await fetchData()
     } catch (error) {
       toast.error('Failed to copy')
     }

@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import type { PromptWithTags, Folder, Tag } from '@/types/database'
+import { mockCreatePrompt, mockUpdatePrompt, mockDeletePrompt, mockCreateTag, mockAddPromptTags } from '@/lib/mockData'
 
 interface PromptEditorProps {
   prompt: PromptWithTags | null
@@ -42,8 +42,6 @@ export default function PromptEditor({
   const [saving, setSaving] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const supabase = createClient()
-
   useEffect(() => {
     if (prompt) {
       setTitle(prompt.title)
@@ -78,47 +76,29 @@ export default function PromptEditor({
       let promptId = prompt?.id
 
       if (isNew) {
-        const { data, error } = await supabase
-          .from('prompts')
-          .insert({
-            user_id: userId,
-            title: title.trim(),
-            content: content.trim(),
-            platform,
-            folder_id: folderId,
-            notes: notes.trim() || null,
-          } as any)
-          .select()
-          .single()
-
-        if (error) throw error
-        promptId = (data as any).id
+        const newPrompt = await mockCreatePrompt({
+          user_id: userId,
+          title: title.trim(),
+          content: content.trim(),
+          platform,
+          folder_id: folderId,
+          notes: notes.trim() || null,
+          usage_count: 0,
+        })
+        promptId = newPrompt.id
       } else {
-        const { error } = await supabase
-          .from('prompts')
-          .update({
-            title: title.trim(),
-            content: content.trim(),
-            platform,
-            folder_id: folderId,
-            notes: notes.trim() || null,
-            updated_at: new Date().toISOString(),
-          } as any)
-          .eq('id', prompt!.id)
-
-        if (error) throw error
+        await mockUpdatePrompt(prompt!.id, {
+          title: title.trim(),
+          content: content.trim(),
+          platform,
+          folder_id: folderId,
+          notes: notes.trim() || null,
+          updated_at: new Date().toISOString(),
+        })
       }
 
-      if (promptId) {
-        await supabase.from('prompt_tags').delete().eq('prompt_id', promptId)
-
-        if (selectedTags.length > 0) {
-          const tagInserts = selectedTags.map((tag) => ({
-            prompt_id: promptId!,
-            tag_id: tag.id,
-          }))
-          await supabase.from('prompt_tags').insert(tagInserts as any)
-        }
+      if (promptId && selectedTags.length > 0) {
+        await mockAddPromptTags(promptId, selectedTags.map((t) => t.id))
       }
 
       toast.success(isNew ? 'Prompt created' : 'Prompt saved')
@@ -142,8 +122,7 @@ export default function PromptEditor({
     if (!prompt) return
 
     try {
-      const { error } = await supabase.from('prompts').delete().eq('id', prompt.id)
-      if (error) throw error
+      await mockDeletePrompt(prompt.id)
       toast.success('Prompt deleted')
       onDelete()
     } catch (error) {
@@ -162,15 +141,8 @@ export default function PromptEditor({
         setSelectedTags([...selectedTags, existingTag])
       }
     } else {
-      const { data, error } = await supabase
-        .from('tags')
-        .insert({ user_id: userId, name: normalizedName } as any)
-        .select()
-        .single()
-
-      if (!error && data) {
-        setSelectedTags([...selectedTags, data as Tag])
-      }
+      const newTag = await mockCreateTag(normalizedName)
+      setSelectedTags([...selectedTags, newTag])
     }
 
     setTagInput('')

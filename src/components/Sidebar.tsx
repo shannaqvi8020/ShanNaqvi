@@ -1,11 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import type { Folder, TagWithCount } from '@/types/database'
-import { User } from '@supabase/supabase-js'
+import { mockCreateFolder, mockUpdateFolder, mockDeleteFolder } from '@/lib/mockData'
+import type { User } from '@supabase/supabase-js'
 
 interface SidebarProps {
   user: User | null
@@ -42,35 +41,20 @@ export default function Sidebar({
   const [newFolderName, setNewFolderName] = useState('')
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
   const [editingFolderName, setEditingFolderName] = useState('')
-  const router = useRouter()
-  const supabase = createClient()
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    toast.success('Logged out successfully')
-    router.push('/login')
-    router.refresh()
-  }
 
   const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newFolderName.trim()) return
 
-    const { error } = await supabase.from('folders').insert({
-      user_id: user?.id!,
-      name: newFolderName.trim(),
-      sort_order: folders.length,
-    } as any)
-
-    if (error) {
+    try {
+      await mockCreateFolder(newFolderName.trim())
+      toast.success('Folder created')
+      setNewFolderName('')
+      setShowNewFolder(false)
+      onFoldersChange()
+    } catch (error) {
       toast.error('Failed to create folder')
-      return
     }
-
-    toast.success('Folder created')
-    setNewFolderName('')
-    setShowNewFolder(false)
-    onFoldersChange()
   }
 
   const handleRenameFolder = async (folderId: string) => {
@@ -79,36 +63,29 @@ export default function Sidebar({
       return
     }
 
-    const { error } = await supabase
-      .from('folders')
-      .update({ name: editingFolderName.trim() } as any)
-      .eq('id', folderId)
-
-    if (error) {
+    try {
+      await mockUpdateFolder(folderId, editingFolderName.trim())
+      toast.success('Folder renamed')
+      setEditingFolderId(null)
+      onFoldersChange()
+    } catch (error) {
       toast.error('Failed to rename folder')
-      return
     }
-
-    toast.success('Folder renamed')
-    setEditingFolderId(null)
-    onFoldersChange()
   }
 
   const handleDeleteFolder = async (folderId: string) => {
     if (!confirm('Delete this folder? Prompts in this folder will become unsorted.')) return
 
-    const { error } = await supabase.from('folders').delete().eq('id', folderId)
-
-    if (error) {
+    try {
+      await mockDeleteFolder(folderId)
+      toast.success('Folder deleted')
+      if (selectedFolderId === folderId) {
+        onSelectAllPrompts()
+      }
+      onFoldersChange()
+    } catch (error) {
       toast.error('Failed to delete folder')
-      return
     }
-
-    toast.success('Folder deleted')
-    if (selectedFolderId === folderId) {
-      onSelectAllPrompts()
-    }
-    onFoldersChange()
   }
 
   const isAllPromptsActive = !selectedFolderId && !selectedTagId && !showUnsorted
