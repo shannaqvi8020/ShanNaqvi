@@ -17,7 +17,6 @@ interface PromptListProps {
 
 export default function PromptList({
   prompts,
-  folders,
   selectedPromptId,
   viewTitle,
   sortBy,

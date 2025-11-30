@@ -61,15 +61,15 @@ export default function SignupPage() {
           { user_id: userId, name: 'Marketing', sort_order: 0 },
           { user_id: userId, name: 'Sales', sort_order: 1 },
           { user_id: userId, name: 'Customer Support', sort_order: 2 },
-        ] as any)
+        ])
         .select()
 
       if (foldersError) throw foldersError
       
-      const folders = foldersData as any[]
-      const marketingFolder = folders?.find((f: any) => f.name === 'Marketing')
-      const salesFolder = folders?.find((f: any) => f.name === 'Sales')
-      const supportFolder = folders?.find((f: any) => f.name === 'Customer Support')
+      const folders = (foldersData || []) as Array<{ id: string; name: string }>
+      const marketingFolder = folders?.find((f) => f.name === 'Marketing')
+      const salesFolder = folders?.find((f) => f.name === 'Sales')
+      const supportFolder = folders?.find((f) => f.name === 'Customer Support')
 
       const { data: tagsData, error: tagsError } = await supabase
         .from('tags')
@@ -80,18 +80,18 @@ export default function SignupPage() {
           { user_id: userId, name: 'outreach' },
           { user_id: userId, name: 'support' },
           { user_id: userId, name: 'response' },
-        ] as any)
+        ])
         .select()
 
       if (tagsError) throw tagsError
 
-      const tags = tagsData as any[]
-      const contentTag = tags?.find((t: any) => t.name === 'content')
-      const blogTag = tags?.find((t: any) => t.name === 'blog')
-      const emailTag = tags?.find((t: any) => t.name === 'email')
-      const outreachTag = tags?.find((t: any) => t.name === 'outreach')
-      const supportTag = tags?.find((t: any) => t.name === 'support')
-      const responseTag = tags?.find((t: any) => t.name === 'response')
+      const tags = (tagsData || []) as Array<{ id: string; name: string }>
+      const contentTag = tags?.find((t) => t.name === 'content')
+      const blogTag = tags?.find((t) => t.name === 'blog')
+      const emailTag = tags?.find((t) => t.name === 'email')
+      const outreachTag = tags?.find((t) => t.name === 'outreach')
+      const supportTag = tags?.find((t) => t.name === 'support')
+      const responseTag = tags?.find((t) => t.name === 'response')
 
       const { data: promptsData, error: promptsError } = await supabase
         .from('prompts')
@@ -117,15 +117,15 @@ export default function SignupPage() {
             content: 'You are a customer support agent for {{company}}. Write a professional and empathetic response to a customer who is upset about {{issue}}. Acknowledge their frustration, apologize, and offer a concrete solution.',
             platform: 'Claude',
           },
-        ] as any)
+        ])
         .select()
 
       if (promptsError) throw promptsError
 
-      const prompts = promptsData as any[]
-      const blogPrompt = prompts?.find((p: any) => p.title === 'Blog Post Outline')
-      const emailPrompt = prompts?.find((p: any) => p.title === 'Cold Email Sequence')
-      const supportPrompt = prompts?.find((p: any) => p.title === 'Customer Complaint Response')
+      const prompts = (promptsData || []) as Array<{ id: string; title: string }>
+      const blogPrompt = prompts?.find((p) => p.title === 'Blog Post Outline')
+      const emailPrompt = prompts?.find((p) => p.title === 'Cold Email Sequence')
+      const supportPrompt = prompts?.find((p) => p.title === 'Customer Complaint Response')
 
       await supabase.from('prompt_tags').insert([
         { prompt_id: blogPrompt?.id, tag_id: contentTag?.id },
@@ -134,9 +134,9 @@ export default function SignupPage() {
         { prompt_id: emailPrompt?.id, tag_id: outreachTag?.id },
         { prompt_id: supportPrompt?.id, tag_id: supportTag?.id },
         { prompt_id: supportPrompt?.id, tag_id: responseTag?.id },
-      ] as any)
-    } catch (error) {
-      console.error('Error creating seed data:', error)
+      ])
+    } catch {
+      console.error('Error creating seed data')
     }
   }
 

@@ -100,13 +100,13 @@ export async function mockFetchData() {
   const promptTags = JSON.parse(localStorage.getItem('mockPromptTags') || '[]')
 
   const promptsWithTags: PromptWithTags[] = prompts.map((prompt) => {
-    const promptTagIds = promptTags.filter((pt: any) => pt.prompt_id === prompt.id).map((pt: any) => pt.tag_id)
+    const promptTagIds = promptTags.filter((pt: { prompt_id: string; tag_id: string }) => pt.prompt_id === prompt.id).map((pt: { prompt_id: string; tag_id: string }) => pt.tag_id)
     const promptTagsList = tags.filter((tag) => promptTagIds.includes(tag.id))
     return { ...prompt, tags: promptTagsList }
   })
 
   const tagCounts: Record<string, number> = {}
-  promptTags.forEach((pt: any) => {
+  promptTags.forEach((pt: { prompt_id: string; tag_id: string }) => {
     tagCounts[pt.tag_id] = (tagCounts[pt.tag_id] || 0) + 1
   })
   const tagsWithCount: TagWithCount[] = tags.map((tag) => ({

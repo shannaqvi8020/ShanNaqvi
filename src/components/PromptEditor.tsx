@@ -103,8 +103,7 @@ export default function PromptEditor({
 
       toast.success(isNew ? 'Prompt created' : 'Prompt saved')
       onSave()
-    } catch (error) {
-      console.error('Error saving prompt:', error)
+    } catch {
       toast.error('Failed to save prompt')
     } finally {
       setSaving(false)
@@ -197,7 +196,7 @@ export default function PromptEditor({
             className="input-field resize-none"
           />
           <p className="text-xs text-gray-500 mt-1">
-            You can use variables like {'{{variable}}'}. You'll fill them in when you copy.
+            You can use variables like {'{{'}&quot;variable&quot;{'}}'} . You&apos;ll fill them in when you copy.
           </p>
         </div>
 
@@ -286,7 +285,7 @@ export default function PromptEditor({
                     onClick={() => addTag(tagInput)}
                     className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm text-primary-600"
                   >
-                    Create "{tagInput}"
+                    Create &quot;{tagInput}&quot;
                   </button>
                 )}
               </div>

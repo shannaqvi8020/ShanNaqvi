@@ -8,7 +8,7 @@ import PromptEditor from '@/components/PromptEditor'
 import VariableModal from '@/components/VariableModal'
 import toast from 'react-hot-toast'
 import type { Folder, Tag, PromptWithTags, TagWithCount } from '@/types/database'
-import { mockFetchData, mockCreateFolder, mockUpdateFolder, mockDeleteFolder, mockCreatePrompt, mockUpdatePrompt, mockDeletePrompt, mockCreateTag, mockAddPromptTags, mockUpdateUsageCount } from '@/lib/mockData'
+import { mockFetchData, mockUpdateUsageCount } from '@/lib/mockData'
 
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null)
@@ -31,9 +31,6 @@ export default function Dashboard() {
     variables: string[]
     prompt: PromptWithTags | null
   }>({ isOpen: false, variables: [], prompt: null })
-  const [isDemo] = useState(true)
-
-  const router = useRouter()
 
   const fetchData = useCallback(async () => {
     const data = await mockFetchData()
@@ -54,12 +51,12 @@ export default function Dashboard() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         role: 'authenticated',
-      } as any
+      } as unknown as User
       setUser(demoUser)
       await fetchData()
       setLoading(false)
     }
-    initDemo()
+    void initDemo()
   }, [fetchData])
 
   useEffect(() => {
@@ -114,7 +111,7 @@ export default function Dashboard() {
       
       await mockUpdateUsageCount(promptId)
       await fetchData()
-    } catch (error) {
+    } catch {
       toast.error('Failed to copy')
     }
   }

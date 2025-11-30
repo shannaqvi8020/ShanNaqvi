@@ -56,7 +56,7 @@ export default function Sidebar({
       setNewFolderName('')
       setShowNewFolder(false)
       onFoldersChange()
-    } catch (error) {
+    } catch {
       toast.error('Failed to create folder')
     }
   }
@@ -72,7 +72,7 @@ export default function Sidebar({
       toast.success('Folder renamed')
       setEditingFolderId(null)
       onFoldersChange()
-    } catch (error) {
+    } catch {
       toast.error('Failed to rename folder')
     }
   }
@@ -87,7 +87,7 @@ export default function Sidebar({
         onSelectAllPrompts()
       }
       onFoldersChange()
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete folder')
     }
   }

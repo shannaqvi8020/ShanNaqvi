@@ -31,7 +31,7 @@ export default function LoginPage() {
       toast.success('Welcome back!')
       router.push('/')
       router.refresh()
-    } catch (error) {
+    } catch {
       toast.error('An error occurred during login')
     } finally {
       setLoading(false)
