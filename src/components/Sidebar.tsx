@@ -42,6 +42,10 @@ export default function Sidebar({
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
   const [editingFolderName, setEditingFolderName] = useState('')
 
+  const handleLogout = () => {
+    toast.success('Demo logout - refresh to reset')
+  }
+
   const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newFolderName.trim()) return
