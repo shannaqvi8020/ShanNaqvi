@@ -1,0 +1,158 @@
+Build a web app called "PromptVault" - a prompt management tool where users can save, organize, and quickly copy their AI prompts.
+
+## Tech Stack
+- Next.js 14 (App Router)
+- Tailwind CSS for styling
+- Supabase for database and authentication
+- TypeScript
+
+## Core Features
+
+### Authentication
+- Sign up with email/password
+- Login/logout
+- Protected routes (redirect to login if not authenticated)
+
+### Database Schema
+
+USERS (handled by Supabase Auth)
+
+FOLDERS table:
+- id (uuid, primary key, default uuid_generate_v4())
+- user_id (uuid, references auth.users)
+- name (text)
+- sort_order (integer, default 0)
+- created_at (timestamp, default now())
+
+PROMPTS table:
+- id (uuid, primary key, default uuid_generate_v4())
+- user_id (uuid, references auth.users)
+- folder_id (uuid, references folders, nullable)
+- title (text)
+- content (text)
+- platform (text, nullable) - e.g., "ChatGPT", "Claude", "Midjourney"
+- notes (text, nullable)
+- usage_count (integer, default 0)
+- created_at (timestamp, default now())
+- updated_at (timestamp, default now())
+
+TAGS table:
+- id (uuid, primary key, default uuid_generate_v4())
+- user_id (uuid, references auth.users)
+- name (text)
+
+PROMPT_TAGS junction table:
+- prompt_id (uuid, references prompts)
+- tag_id (uuid, references tags)
+- primary key (prompt_id, tag_id)
+
+### UI Layout
+
+Three-column layout:
+1. LEFT SIDEBAR (fixed, 250px wide):
+   - App logo "PromptVault" at top
+   - Search input
+   - "All Prompts" nav link
+   - "Unsorted" nav link  
+   - "FOLDERS" section header with + button to add folder
+   - List of folders (clickable to filter prompts)
+   - "TAGS" section header
+   - List of tags with count badges (clickable to filter)
+   - User avatar and logout at bottom
+
+2. MIDDLE SECTION (flexible width):
+   - Header with current view name (e.g., "All Prompts" or folder name)
+   - "New Prompt" button in header
+   - Sort dropdown (Recent, A-Z, Most Used)
+   - List of prompt cards, each showing:
+     - Title
+     - Tags as small pills/badges
+     - "Copy" button on the right
+     - Timestamp (e.g., "2 hours ago")
+   - Clicking a prompt card opens it in the right panel
+
+3. RIGHT PANEL (400px wide, slides in when prompt selected):
+   - Close X button
+   - Title input field
+   - Content textarea (large, this is the main prompt text)
+   - Helper text: "You can use variables like {{variable}}. You'll fill them in when you copy."
+   - Platform dropdown (ChatGPT, Claude, Midjourney, Other)
+   - Folder dropdown
+   - Tags input (autocomplete, can add multiple)
+   - Notes textarea
+   - "Save" button (green)
+   - "Save & Copy" button (secondary)
+   - Small text showing "Saved [date]"
+
+### Key Functionality
+
+1. COPY WITH VARIABLES:
+   - When user clicks "Copy" button on a prompt
+   - Check if content contains {{variableName}} patterns
+   - If yes: show a modal asking user to fill in each variable value
+   - Replace variables with user input
+   - Copy final text to clipboard
+   - Show toast "Copied to clipboard!"
+   - Increment usage_count for that prompt
+
+2. SEARCH:
+   - Real-time search as user types
+   - Search through prompt titles and content
+   - Debounce input (300ms)
+
+3. FILTERING:
+   - Click folder in sidebar → show only prompts in that folder
+   - Click tag in sidebar → show only prompts with that tag
+   - "All Prompts" shows everything
+   - "Unsorted" shows prompts with no folder
+
+4. CRUD OPERATIONS:
+   - Create new prompt (opens empty right panel)
+   - Edit prompt (click existing prompt)
+   - Delete prompt (button in editor, with confirmation)
+   - Create/rename/delete folders
+   - Auto-save or save on button click
+
+### Styling Guidelines
+- Clean, minimal design
+- White/light gray background
+- Primary accent color: purple (#7C3AED)
+- Cards have subtle shadows and rounded corners
+- Smooth transitions when panels open/close
+- Toast notifications for actions (copied, saved, deleted)
+
+### Nice to Have (if time permits)
+- Drag and drop to reorder prompts or move to folders
+- Favorite/star prompts
+- Dark mode toggle
+- Export prompts as JSON
+- Import prompts from JSON
+
+## Initial Seed Data
+After user signs up, create these default folders:
+- Marketing
+- Sales
+- Customer Support
+
+And create 3 sample prompts so the app doesn't look empty:
+
+1. Title: "Blog Post Outline"
+   Content: "Create a detailed outline for a blog post about {{topic}}. Include an engaging introduction, 5 main sections with subpoints, and a conclusion with a call to action."
+   Folder: Marketing
+   Tags: content, blog
+
+2. Title: "Cold Email Sequence"
+   Content: "Write a 3-email cold outreach sequence for {{company}} targeting {{audience}}. Email 1 should introduce the problem, Email 2 should present the solution, Email 3 should create urgency."
+   Folder: Sales
+   Tags: email, outreach
+
+3. Title: "Customer Complaint Response"
+   Content: "You are a customer support agent for {{company}}. Write a professional and empathetic response to a customer who is upset about {{issue}}. Acknowledge their frustration, apologize, and offer a concrete solution."
+   Folder: Customer Support
+   Tags: support, response
+
+## Environment Variables Needed
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+Please set up Supabase with the schema above and make sure Row Level Security (RLS) is enabled so users can only see their own data.
